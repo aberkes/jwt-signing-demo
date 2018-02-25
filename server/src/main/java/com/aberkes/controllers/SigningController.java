@@ -1,9 +1,12 @@
 package com.aberkes.controllers;
 
+import java.io.IOException;
 import java.util.Base64;
 import com.aberkes.models.Keys;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import org.bouncycastle.asn1.ASN1Primitive;
+import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,8 +28,7 @@ import java.util.Date;
 public class SigningController
 {
     @GetMapping("/generate")
-    public ResponseEntity<Keys> generate()
-    {
+    public ResponseEntity<Keys> generate() {
         byte[] encodedPublicKey;
         byte[] encodedPrivateKey;
 
@@ -37,14 +39,21 @@ public class SigningController
 
             KeyPair kp = generator.generateKeyPair();
 
-            encodedPublicKey = kp.getPublic().getEncoded();
+            SubjectPublicKeyInfo spkInfo = SubjectPublicKeyInfo.getInstance(kp.getPublic().getEncoded());
+            ASN1Primitive primitive = spkInfo.parsePublicKey();
+
+            // encodedPublicKey = kp.getPublic().getEncoded();
+            encodedPublicKey = primitive.getEncoded();
             encodedPrivateKey = kp.getPrivate().getEncoded();
         }
         catch (NoSuchAlgorithmException e)
         {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
-
+        catch (IOException e)
+        {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
 
         Keys keys = new Keys();
         keys.setPublicKey(Base64.getEncoder().encodeToString(encodedPublicKey));
