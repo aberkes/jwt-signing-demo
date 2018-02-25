@@ -33,6 +33,7 @@ public class SigningController
         try
         {
             KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+            generator.initialize(2048);
 
             KeyPair kp = generator.generateKeyPair();
 
